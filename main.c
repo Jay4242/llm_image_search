@@ -416,11 +416,16 @@ int main(void)
     const int checkboxSize = 20;
     const int inputBoxHeight = 30;
     Rectangle inputBox; // UI input rectangle, declared once for reuse
+    Rectangle checkBox; // Checkbox rectangle, reused each frame
     const int buttonWidth = 100;
     const int searchBarWidth = 400;
     char searchPhrase[256] = "";
     bool editingSearch = false;
     int searchScrollOffset = 0;
+
+    // Cursor blink state (shared for both input boxes)
+    static float cursorTimer = 0.0f;
+    static bool cursorVisible = true;
 
     // Register SIGINT handler for clean exit
     signal(SIGINT, handle_sigint);
@@ -468,7 +473,7 @@ int main(void)
              }
 
             // Recursive checkbox
-            Rectangle checkBox = {10, inputBox.y + inputBox.height + 10, (float)checkboxSize, (float)checkboxSize};
+            checkBox = (Rectangle){10, inputBox.y + inputBox.height + 10, (float)checkboxSize, (float)checkboxSize};
             if (CheckCollisionPointRec(mouse, checkBox))
                 recursive = !recursive;
 
@@ -663,12 +668,25 @@ int main(void)
         }
         BeginDrawing();
         ClearBackground(RAYWHITE);
+        // Update cursor blink timer (toggle every 0.5 seconds)
+        cursorTimer += GetFrameTime();
+        if (cursorTimer >= 0.5f) {
+            cursorVisible = !cursorVisible;
+            cursorTimer = 0.0f;
+        }
 
         // UI: Directory input
         inputBox = (Rectangle){10, 10, (float)(GetScreenWidth() - 20 - buttonWidth - 10), (float)inputBoxHeight};
         DrawRectangleRec(inputBox, LIGHTGRAY);
         DrawRectangleLinesEx(inputBox, 2, DARKGRAY);
         DrawText(dirPath, (int)inputBox.x + 5, (int)inputBox.y + 5, 20, BLACK);
+        // Show blinking cursor when the directory box is active
+        if (editingDir && cursorVisible) {
+            int textWidth = MeasureText(dirPath, 20);
+            int cursorX = (int)inputBox.x + 5 + textWidth + 2;
+            int cursorY = (int)inputBox.y + 5;
+            DrawRectangle(cursorX, cursorY, 2, 20, BLACK);
+        }
 
         // UI: Load button
         Rectangle loadBtn = {inputBox.x + inputBox.width + 10, 10, (float)buttonWidth, (float)inputBoxHeight};
@@ -697,6 +715,13 @@ int main(void)
         DrawRectangleRec(searchBox, LIGHTGRAY);
         DrawRectangleLinesEx(searchBox, 2, DARKGRAY);
         DrawText(searchPhrase + searchScrollOffset, (int)searchBox.x + 5, (int)searchBox.y + 5, 20, BLACK);
+        // Show blinking cursor when the search box is active
+        if (editingSearch && cursorVisible) {
+            int visibleWidth = MeasureText(searchPhrase + searchScrollOffset, 20);
+            int cursorX = (int)searchBox.x + 5 + visibleWidth + 2;
+            int cursorY = (int)searchBox.y + 5;
+            DrawRectangle(cursorX, cursorY, 2, 20, BLACK);
+        }
 
         // UI: Search button
         DrawRectangleRec(searchBtn, GRAY);
