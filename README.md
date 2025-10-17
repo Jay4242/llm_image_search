@@ -27,6 +27,17 @@ make
 
 The resulting executable will be named `llm_image_search`.
 
+### macOS Support
+
+On macOS the Makefile automatically selects the correct frameworks for Raylib.  
+Install the dependencies with Homebrew:
+
+```bash
+brew install raylib curl jansson
+```
+
+Then simply run `make` as on Linux; the build will link against the required macOS frameworks (`OpenGL`, `Cocoa`, `IOKit`, `CoreVideo`). No further changes are needed. 
+
 ## Dependencies
 
 The program links against the following libraries:
